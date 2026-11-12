@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>東海實習職缺一覽</title>
+<style>
+  /* 所有樣式都限定在 #thu-intern 裡面：整段貼進 WordPress、放進 iframe 或單獨開啟，卡片樣式都一樣，也不會影響網站其他地方 */
+  /* 配色取自東海大學企管系系徽：主色藍 #1E6F9E、輔助色橘 #F19F33 */
+  body.thu-page { margin: 0; background: #1e6f9e; }
+  #thu-intern { --ba-blue: #1e6f9e; --ba-blue-dark: #155279; --ba-orange: #f19f33; --head: #134a6c; --line: #dbe6ee; --text: #1f2a33; --sub: #5f6b76;
+                display: block; box-sizing: border-box; max-width: 1100px; margin: 0 auto; text-align: left;
+                font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; font-size: clamp(15px, 0.55vw + 10px, 20px);   /* 螢幕越寬字越大 */
+                line-height: 1.55; color: var(--text); background: var(--ba-blue); border-radius: 10px;
+                padding: 1.5em max(16px, env(safe-area-inset-left, 0px)); }
+  #thu-intern *, #thu-intern *::before, #thu-intern *::after { box-sizing: border-box; }
+  #thu-intern p { margin: 0; padding: 0; }
+  #thu-intern a { text-decoration: underline; box-shadow: none; }
+  #thu-intern h1.ti-title { font-family: inherit !important; font-size: 1.5em !important; line-height: 1.3 !important; font-weight: 700; letter-spacing: normal !important; text-transform: none !important;
+                            margin: 0 0 6px !important; padding: 0 0 6px; color: #fff !important; background: none; border: none; border-bottom: 4px solid var(--ba-orange); display: inline-block; }
+  #thu-intern .meta { color: #dcebf5; font-size: .88em; margin: 0 0 14px; }
+  #thu-intern .lead { color: #eaf3f9; font-size: .92em; margin: 0 0 10px; }
+  /* 頁首說明 */
+  #thu-intern .notice { background: #fff; color: var(--text); border-radius: 8px; border-left: 5px solid var(--ba-orange); padding: 10px 16px; margin: 0 0 14px; font-size: .9em; }
+  #thu-intern .notice p { margin: 4px 0; }
+  #thu-intern .notice b { color: var(--head); }
+  #thu-intern .notice details { margin: 6px 0 0; padding: 6px 0 0; border: none; border-top: 1px dashed #d6e2ea; background: none; }
+  #thu-intern .notice summary { display: list-item; cursor: pointer; font-weight: 700; color: var(--ba-blue); padding: 4px 0; margin: 0; background: none; border: none; font-size: 1em; }
+  #thu-intern .notice summary::after { content: "（點一下展開）"; font-weight: 400; color: var(--sub); font-size: .85em; }
+  #thu-intern .notice details[open] summary::after { content: "（收合）"; }
+  /* 篩選列 */
+  #thu-intern .bar { color: #fff; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 0 0 12px; font-size: .92em; }
+  #thu-intern .bar label { display: inline-flex; align-items: center; gap: 6px; margin: 0; color: #fff; font-size: 1em; font-weight: 400; }
+  #thu-intern .bar select { font: inherit; font-size: .95em; width: auto; height: auto; min-height: 0; margin: 0; padding: 4px 8px; line-height: 1.4;
+                            border: 1px solid #b9cfdf; border-radius: 6px; background: #fff; color: var(--text); box-shadow: none; }
+  #thu-intern .bar .f-q { flex: 1 1 100%; width: 100%; min-width: 0; height: auto; margin: 0; font: inherit; font-size: 1em; line-height: 1.4; padding: .45em .7em;
+                          border: 2px solid #b9cfdf; border-radius: 8px; background: #fff; color: var(--text); box-shadow: none; }
+  #thu-intern .bar .f-q:focus { outline: 3px solid var(--ba-orange); outline-offset: 0; border-color: var(--ba-orange); }
+  #thu-intern .bar input[type=checkbox] { accent-color: var(--ba-orange); width: 1.15em; height: 1.15em; margin: 0; padding: 0; vertical-align: -.2em; appearance: auto; position: static; opacity: 1; }
+  #thu-intern .bar .f-shown { color: #dcebf5; }
+  /* 卡片：不論放在哪裡、視窗寬窄、放大縮小，都維持一則一張卡片（加 !important 是為了不被網站主題的表格樣式蓋掉） */
+  #thu-intern table, #thu-intern tbody, #thu-intern tr, #thu-intern td { display: block !important; width: 100% !important; max-width: 100% !important;
+                                                                        float: none !important; position: static !important; height: auto !important; }
+  #thu-intern thead { display: none !important; }
+  #thu-intern table { border: none !important; border-collapse: separate !important; border-spacing: 0 !important; margin: 0 !important; padding: 0 !important;
+                      background: transparent !important; box-shadow: none !important; table-layout: auto !important; font-size: .93em; }
+  #thu-intern tbody { border: none !important; background: transparent !important; margin: 0 !important; padding: 0 !important; }
+  #thu-intern tr { background: #fff !important; border: none !important; border-left: 4px solid var(--ba-orange) !important; border-radius: 8px !important;
+                   padding: 6px 0 !important; margin: 0 0 8px !important; box-shadow: none !important; }
+  #thu-intern tr.closed { border-left-color: #b0b6bd !important; }
+  #thu-intern tr:hover { background: #f4f8fb !important; }
+  #thu-intern tr[hidden] { display: none !important; }
+  #thu-intern td { border: none !important; background: transparent !important; padding: 3px 12px !important; margin: 0 !important;
+                   text-align: left !important; vertical-align: top !important; white-space: normal !important; color: var(--text); font-size: 1em; line-height: 1.55; }
+  #thu-intern td::before { content: attr(data-label) "："; color: var(--sub); font-size: .88em; font-weight: 400; }
+  #thu-intern tr.closed td, #thu-intern tr.closed td a { color: #5f6670 !important; }
+  #thu-intern td a { color: var(--ba-blue); font-weight: 600; display: inline-block; padding: .45em .25em; margin: -.45em -.25em; background: none; border: none; }   /* 手機上比較好點 */
+  #thu-intern td a:hover { color: var(--ba-blue-dark); }
+  #thu-intern .tag { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: .86em; background: #eaf2f8; color: var(--ba-blue); font-weight: 600; }
+  #thu-intern tr.closed .tag { background: #e4e7ea; color: #5f6670; }
+  #thu-intern .soon { color: #c62828; font-weight: 600; }
+  #thu-intern .open { color: #9a5300; font-weight: 600; }
+  #thu-intern .muted { color: var(--sub); }
+  #thu-intern .off { display: inline-block; padding: 0 6px; border-radius: 4px; background: #6b7280; color: #fff; font-size: .84em; }
+  /* 報名限制：顯示在職缺名稱下面 */
+  #thu-intern .limit { display: block; width: fit-content; max-width: 100%; margin: 4px 0 0; padding: 2px 8px; border-radius: 6px; font-size: .88em; font-weight: 600; line-height: 1.5; }
+  #thu-intern .notice .limit { display: inline; margin: 0; }
+  #thu-intern .limit.no { background: #fdecea; color: #b71c1c; }
+  #thu-intern .limit.warn { background: #fff4e5; color: #8a4f00; }
+</style>
+</head>
+<body class="thu-page">
+<main id="thu-intern" class="thu-intern">
+  <h1 class="ti-title">東海實習職缺一覽</h1>
+  <div class="meta">更新時間 2026-11-12 08:55・每則資訊都附上來源網址，報名前請以原始公告為準</div>
+  <section class="panel" id="intern" role="tabpanel">
+    <p class="lead">整理企管、國貿、財金、經濟系、實習與學生成就中心及 GIFT 的實習公告，每天自動更新。共 87 則（可報名 18、未標示截止日 21、已截止 48）。</p>
+    <div class="notice">
+      <p><b>⚠️ 報名前請注意：</b>國貿、財金、經濟系公告的職缺，有些只開放該系學生。請先看原公告的資格，並<b>洽詢該公司或職缺窗口是否開放企管系學生報名</b>。標 <span class="limit no" >❌</span> 的已確認限定科系，標 <span class="limit warn" >⚠️</span> 的資格需要再確認。國貿、財金、經濟系的職缺如果<b>沒有標示</b>，代表公司在該系公告上沒有寫出限制條件，但不代表一定開放，仍請先洽詢公司，錄取後再向企管系辦確認學分認列。</p>
+      <details>
+        <summary>📌 為什麼也放其他系的職缺？為什麼同一個職缺會出現好幾次？</summary>
+        <p><b>為什麼放其他系的職缺：</b>大部分商管類實習不限科系，只看企管系的公告會錯過很多機會，所以這裡一併整理管理學院各系、實習與學生成就中心和 GIFT 平台的實習。</p>
+        <p><b>為什麼不合併重複的職缺：</b>同一家公司常在好幾個系同時公告，但各系公告的報名資格、名額、截止日和學分認列可能不同，例如有的只限該系學生。為了避免合併後漏掉這些差異，每個系的公告都分開列出，方便對照自己能報哪一則。</p>
+        <p><b>實習學分：</b>公告寫的「可認列系上實習學分」是指該系的學分，想抵企管系的實習學分，請先問企管系辦。</p>
+      </details>
+    </div>
+    <div class="bar" data-list="intern-list">
+      <input type="search" class="f-q" id="intern-q" placeholder="搜尋職缺名稱、公司或關鍵字，例如：銀行、行銷、台中">
+      <label>來源 <select class="f-src" id="intern-src"><option value="">全部（87）</option>
+      <option value="企管系">企管系（17）</option>
+      <option value="國貿系">國貿系（17）</option>
+      <option value="財金系">財金系（35）</option>
+      <option value="實習中心">實習中心（15）</option>
+      <option value="GIFT實習平台">GIFT實習平台（3）</option>
+      </select></label>
+      <label>類別 <select class="f-ind" id="intern-ind"><option value="">全部（87）</option>
+      <option value="公部門">#公部門（1）</option>
+      <option value="金融業">#金融業（53）</option>
+      <option value="科技業">#科技業（17）</option>
+      <option value="製造業">#製造業（5）</option>
+      <option value="商業服務">#商業服務（7）</option>
+      <option value="其他">#其他（4）</option>
+      </select></label>
+      <label><input type="checkbox" class="f-hide" id="intern-hide"> 隱藏已截止</label>
+      <span class="f-shown muted"></span>
+    </div>
+    <table>
+      <thead><tr><th>實習職缺</th><th>職缺來源</th><th>截止報名日期</th><th>類別</th></tr></thead>
+      <tbody id="intern-list">
+      <tr data-source="財金系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">板信商銀115年度「校園實習生(學期)實習計畫」<span class="limit no">❌ 限財金系（及就業學程）大四學生，錄取後要修財金系實習學分</span></td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=870&amp;cid=15" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="soon">2026-11-13（剩 1 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="科技業" data-status="open">
+        <td data-label="實習職缺">京元電子將辦理115-2學期實習-東海專場說明會</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/京元電子將辦理115-2學期實習-東海專場說明會/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期"><span class="soon">2026/11 月中前（約剩 3 天）</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">玉山金控（三商美邦人壽）實習計畫<span class="limit warn">⚠️ 寒假實習不限科系；大四學期實習沒寫科系，請先洽詢公司是否開放企管系</span></td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=863" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="soon">2026-11-15（剩 3 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="製造業" data-status="open">
+        <td data-label="實習職缺">【新武股份有限公司】2027年學期實習招募</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1152" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期"><span class="soon">2026-11-15（剩 3 天）</span></td>
+        <td data-label="類別"><span class="tag">#製造業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">群益金鼎證券2027實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=852" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="soon">2026-11-16（剩 4 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="公部門" data-status="open">
+        <td data-label="實習職缺">農業部林業試驗所寒假實習招募</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1192" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期"><span class="soon">2026-11-18（剩 6 天）</span></td>
+        <td data-label="類別"><span class="tag">#公部門</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">富邦產險116/3-116/6 學期實習甄選－收件至11/20 (五)<span class="limit warn">⚠️ 要配合系上實習課，報名前請先告知系上</span></td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e5%af%8c%e9%82%a6%e7%94%a2%e9%9a%aa116-3-116-6-%e5%ad%b8%e6%9c%9f%e5%af%a6%e7%bf%92%e7%94%84%e9%81%b8%ef%bc%8d%e6%94%b6%e4%bb%b6%e8%87%b311/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-11-20（剩 8 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">南山人壽115學年帶薪學期實習徵選<span class="limit no">❌ 限東海財金系大四應屆畢業生</span></td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=846" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-11-20（剩 8 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">2027富邦產險學期實習招募</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=831" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-11-20（剩 8 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">【富邦產物保險(股)公司】116/3-116/6 學期實習甄選</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=8&amp;id=1130" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-11-20（剩 8 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="其他" data-status="open">
+        <td data-label="實習職缺">【2027 UNIQLO U先培訓營實習計畫】</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/【2027+UNIQLO+U先培訓營實習計畫】/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-11-30（剩 18 天）</span></td>
+        <td data-label="類別"><span class="tag">#其他</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">群益金鼎證券2027實習職缺資訊－收件至11/30 (一)</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e7%be%a4%e7%9b%8a%e9%87%91%e9%bc%8e%e8%ad%89%e5%88%b82027%e5%af%a6%e7%bf%92%e8%81%b7%e7%bc%ba%e8%b3%87%e8%a8%8a%ef%bc%8d%e6%94%b6%e4%bb%b6/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-11-30（剩 18 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="科技業" data-status="open">
+        <td data-label="實習職缺">2027京元電子產學實習</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=837" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-11-30（剩 18 天）</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">115學年度兆豐證券明日之星實習</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=868&amp;cid=15" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-11-30（剩 18 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="科技業" data-status="open">
+        <td data-label="實習職缺">創資通新竹廠區 - 「竹夢緯創學期實習計畫」熱烈招募中！</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1173" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-11-30（剩 18 天）</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">美好證券下學期實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=873&amp;cid=15" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-12-18（剩 36 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">中租迪和企金/合迪儲備業務實習生（2027）</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e4%b8%ad%e7%a7%9f%e8%bf%aa%e5%92%8c%e4%bc%81%e9%87%91-%e5%90%88%e8%bf%aa%e5%84%b2%e5%82%99%e6%a5%ad%e5%8b%99%e5%af%a6%e7%bf%92%e7%94%9f/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-12-31（剩 49 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="open">
+        <td data-label="實習職缺">115學年度中租控股的企金業務實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=827" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="open">2026-12-31（剩 49 天）</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="科技業" data-status="unknown">
+        <td data-label="實習職缺">【台灣美光】2027台灣美光學期實習招募(116/2/22-6/27)</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=8&amp;id=1125" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="科技業" data-status="unknown">
+        <td data-label="實習職缺">上福全球科技股份有限公司</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%be%b5%e6%89%8d%e8%b3%87%e8%a8%8a%e3%80%91%e4%b8%8a%e7%a6%8f%e5%85%a8%e7%90%83%e7%a7%91%e6%8a%80%e8%82%a1%e4%bb%bd%e6%9c%89%e9%99%90%e5%85%ac%e5%8f%b8/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="商業服務" data-status="unknown">
+        <td data-label="實習職缺">禾寶醫療集團實習計畫</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e7%a6%be%e5%af%b6%e9%86%ab%e7%99%82%e9%9b%86%e5%9c%98%e5%af%a6%e7%bf%92%e8%a8%88%e7%95%ab/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#商業服務</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="金融業" data-status="unknown">
+        <td data-label="實習職缺">新光人壽產學合作（學分制/體驗制/寒暑假方案）<span class="limit warn">⚠️ 產學合作方案，資格寫在附件，可能限國貿系，請先洽詢公司是否開放企管系</span></td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e6%96%b0%e5%85%89%e4%ba%ba%e5%a3%bd%e7%94%a2%e5%ad%b8%e5%90%88%e4%bd%9c%ef%bc%88%e5%ad%b8%e5%88%86%e5%88%b6-%e9%ab%94%e9%a9%97%e5%88%b6/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="unknown">
+        <td data-label="實習職缺">2027台新新光金控 年 Early Win 實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=830&amp;cid=15" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="金融業" data-status="unknown">
+        <td data-label="實習職缺">台新新光金控2027年Early Win職場體驗計畫(半年期)</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e5%8f%b0%e6%96%b0%e6%96%b0%e5%85%89%e9%87%91%e6%8e%a72027%e5%b9%b4early-win%e8%81%b7%e5%a0%b4%e9%ab%94%e9%a9%97%e8%a8%88%e7%95%ab%e5%8d%8a/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="商業服務" data-status="unknown">
+        <td data-label="實習職缺">沛華集團航運人才招募</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e6%b2%9b%e8%8f%af%e9%9b%86%e5%9c%98%e8%88%aa%e9%81%8b%e4%ba%ba%e6%89%8d%e6%8b%9b%e5%8b%9f/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#商業服務</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="科技業" data-status="unknown">
+        <td data-label="實習職缺">京元電子116年學期實習生招募(116/02/-116/06)<span class="limit warn">⚠️ 限理工、資訊、管理相關科系，要配合系上實習課，報名前請先告知系上</span></td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e4%ba%ac%e5%85%83%e9%9b%bb%e5%ad%90116%e5%b9%b4%e5%ad%b8%e6%9c%9f%e5%af%a6%e7%bf%92%e7%94%9f%e6%8b%9b%e5%8b%9f116-02-116-06/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="科技業" data-status="unknown">
+        <td data-label="實習職缺">2027 Google Taiwan  實習說明會</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1157" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="科技業" data-status="unknown">
+        <td data-label="實習職缺">【京元電子】116年學期實習生招募(116/02/-116/06)</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=8&amp;id=1143" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="unknown">
+        <td data-label="實習職缺">統一證券2027全方位理財業務員實習招募中</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=858" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="金融業" data-status="unknown">
+        <td data-label="實習職缺">新光產物保險股份有限公司招募115學年度下學期實習生(116年2月15日至116年6月25日)</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1137" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="製造業" data-status="unknown">
+        <td data-label="實習職缺">【賜昌集團】-2027年海外實習計畫</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1131" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#製造業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="製造業" data-status="unknown">
+        <td data-label="實習職缺">【哈卡鞋業】2027學期制實習招募</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1151" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#製造業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="金融業" data-status="unknown">
+        <td data-label="實習職缺">新光人壽-115年產學實習辦法</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/新光人壽-115年產學實習辦法/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="製造業" data-status="unknown">
+        <td data-label="實習職缺">開元食品實習招募</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/開元食品實習招募/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#製造業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="商業服務" data-status="unknown">
+        <td data-label="實習職缺">新加坡商立福人事顧問有限公司台灣分公司-招募實習生</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/新加坡商立福人事顧問有限公司台灣分公司-招募實習生/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#商業服務</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="其他" data-status="unknown">
+        <td data-label="實習職缺">應數系微積分兼任助教徵聘</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/應數系微積分兼任助教徵聘/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#其他</span></td>
+      </tr>
+      <tr data-source="GIFT實習平台" data-industry="商業服務" data-status="unknown">
+        <td data-label="實習職缺">會計實習生</td>
+        <td data-label="職缺來源"><a href="https://www.gift.org.tw/index.php/welcome/jobs?s_1=2#1483" target="_blank" rel="noopener">GIFT實習平台</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#商業服務</span></td>
+      </tr>
+      <tr data-source="GIFT實習平台" data-industry="金融業" data-status="unknown">
+        <td data-label="實習職缺">策略行銷部 數據轉型實習生</td>
+        <td data-label="職缺來源"><a href="https://www.gift.org.tw/index.php/welcome/jobs?s_1=2#1482" target="_blank" rel="noopener">GIFT實習平台</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="GIFT實習平台" data-industry="金融業" data-status="unknown">
+        <td data-label="實習職缺">應用系統部 系統管理科實習生</td>
+        <td data-label="職缺來源"><a href="https://www.gift.org.tw/index.php/welcome/jobs?s_1=2#1471" target="_blank" rel="noopener">GIFT實習平台</a></td>
+        <td data-label="截止報名日期"><span class="muted">未標示</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="科技業" data-status="closed" class="closed">
+        <td data-label="實習職缺">【凌網科技(股)公司/凌網資訊(股)公司】學期實習招募(116/2-116/6)</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1118" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期">2026-11-10 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">聯邦銀行實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=848" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-11-09 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="科技業" data-status="closed" class="closed">
+        <td data-label="實習職缺">【鼎新數智】2027年度實習生招募資訊</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/【鼎新數智】2027年度實習生招募資訊/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2026-11-08 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="科技業" data-status="closed" class="closed">
+        <td data-label="實習職缺">鼎新數智2027年度實習生招募資訊</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e9%bc%8e%e6%96%b0%e6%95%b8%e6%99%ba2027%e5%b9%b4%e5%ba%a6%e5%af%a6%e7%bf%92%e7%94%9f%e6%8b%9b%e5%8b%9f%e8%b3%87%e8%a8%8a-11-08%ef%bc%88/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期">2026-11-08 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="科技業" data-status="closed" class="closed">
+        <td data-label="實習職缺">鼎新數智2027年菁英實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=871" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-11-08 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="商業服務" data-status="closed" class="closed">
+        <td data-label="實習職缺">安永聯合會計師事務所2027旺季實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=876&amp;cid=15" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-11-08 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#商業服務</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="科技業" data-status="closed" class="closed">
+        <td data-label="實習職缺">【鼎新數智】2027年度實習生招募</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1164" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期">2026-11-08 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="商業服務" data-status="closed" class="closed">
+        <td data-label="實習職缺">【資誠聯合會計師事務所】2027 旺季工讀生招募資訊</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/【資誠聯合會計師事務所】2027+旺季工讀生招募資訊/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2026-11-06 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#商業服務</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="科技業" data-status="closed" class="closed">
+        <td data-label="實習職缺">【聯華電子】大四學期半導體設備實習生招募計畫</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1103" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期">2026-11-06 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="其他" data-status="closed" class="closed">
+        <td data-label="實習職缺">桃園機場115年公開招募｜64名新夥伴，邀請您一起加入！</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/桃園機場115年公開招募|64名新夥伴,邀請您一起加入!/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2026-11-02 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#其他</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="科技業" data-status="closed" class="closed">
+        <td data-label="實習職缺">上銀科技 2027 學期型實習計畫</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/上銀科技+2027+學期型實習計畫/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2026-11-01 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="科技業" data-status="closed" class="closed">
+        <td data-label="實習職缺">上銀科技 2027 學期型實習計畫<span class="limit warn">⚠️ 資格寫在公告圖片裡，請看原公告</span></td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e4%b8%8a%e9%8a%80%e7%a7%91%e6%8a%80-2027-%e5%ad%b8%e6%9c%9f%e5%9e%8b%e5%af%a6%e7%bf%92%e8%a8%88%e7%95%ab-11-01%ef%bc%88%e6%97%a5%ef%bc%89/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期">2026-11-01 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="科技業" data-status="closed" class="closed">
+        <td data-label="實習職缺">2027 台積電預辦登積計畫-10/31截止</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%912027-%e5%8f%b0%e7%a9%8d%e9%9b%bb%e9%a0%90%e8%be%a6%e7%99%bb%e7%a9%8d%e8%a8%88%e7%95%ab-10-31%e6%88%aa%e6%ad%a2/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期">2026-10-31 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#科技業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">上海商銀學期實習計畫<span class="limit warn">⚠️ 限金融相關科系，請先洽詢公司是否開放企管系</span></td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=862" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-31 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">【上海銀行】-「職場先發計劃」學期實習招募(2027/3/2-2027/6/30)</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1139" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期">2026-10-31 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="製造業" data-status="closed" class="closed">
+        <td data-label="實習職缺">興農股份有限公司【學期型校外專業實習計劃】</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/興農股份有限公司【學期型校外專業實習計劃】/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2026/10/30 前 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#製造業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">永豐銀行 第31屆卓越人才實習計畫</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e6%b0%b8%e8%b1%90%e9%8a%80%e8%a1%8c-%e7%ac%ac31%e5%b1%86%e5%8d%93%e8%b6%8a%e4%ba%ba%e6%89%8d%e5%af%a6%e7%bf%92%e8%a8%88%e7%95%ab-10-30/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期">2026-10-30 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">統一期貨台中分公司實習徵才</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=835" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-30 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">2027華南期貨學期實習計畫<span class="limit no">❌ 限財金系（及就業學程）學生，錄取後要修財金系實習學分</span></td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=829" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-30 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">2027第一金證券職場實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=839" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-30 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">永豐銀行第31屆卓越人才實習招募計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=859" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-30 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">元大證券-理財菁英實習專案(學元計畫)</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=832" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-26 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">國泰人壽第十屆國泰人壽CAP實習計畫｜正式整併、擴大招募！</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=872&amp;cid=15" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-25 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">三信商業銀行東海大學實習招募<span class="limit warn">⚠️ 公告可能限定科系或要配合該系實習課，請先洽詢公司是否開放企管系</span></td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=845" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-23 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="商業服務" data-status="closed" class="closed">
+        <td data-label="實習職缺">英屬安吉拉商郁巧</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e8%8b%b1%e5%b1%ac%e5%ae%89%e5%90%89%e6%8b%89%e5%95%86%e9%83%81%e5%b7%a7-10-22%ef%bc%88%e5%9b%9b%ef%bc%89-%e7%94%b3%e8%ab%8b%e6%88%aa/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期">2026-10-22 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#商業服務</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">中國信託法金作業服務人員｜半年制實習計畫－收件至10/19 (一)</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e4%b8%ad%e5%9c%8b%e4%bf%a1%e8%a8%97%e6%b3%95%e9%87%91%e4%bd%9c%e6%a5%ad%e6%9c%8d%e5%8b%99%e4%ba%ba%e5%93%a1%ef%bd%9c%e5%8d%8a%e5%b9%b4/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期">2026-10-19 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">中國信託實習計畫_法人金融作業服務人員</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=875&amp;cid=15" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-19 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">國泰世華銀行 CSP（Cathay Seed Program）</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/國泰世華銀行+CSP(Cathay+Seed+Program)/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2026-10-18 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">東海大學國貿系 &amp; 國泰世華銀行 產學合作計畫</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e6%9d%b1%e6%b5%b7%e5%a4%a7%e5%ad%b8%e5%9c%8b%e8%b2%bf%e7%b3%bb-%e5%9c%8b%e6%b3%b0%e4%b8%96%e8%8f%af%e9%8a%80%e8%a1%8c-%e7%94%a2%e5%ad%b8/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期">2026-10-18 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">國泰世華銀行CSP實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=866" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-18 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">安泰銀行2027學期實習</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=844" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-16 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">富邦證券產學合作實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=861" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-16 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">台北富邦銀行2027實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=864" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-16 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">2027中國信託半年制個金實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=828" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-12 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">2027合作金庫實習計畫<span class="limit warn">⚠️ 公告可能限定科系或要配合該系實習課，請先洽詢公司是否開放企管系</span></td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=825" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-12 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">【2027玉山實習計畫】即日起開始報名，延長至10月11日收件截止！</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/【2027玉山實習計畫】即日起開始報名,延長至10月11日收件截止!/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2026-10-11 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="國貿系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">玉山銀行2027年度實習生招募資訊- 延長收件至10/11（日）</td>
+        <td data-label="職缺來源"><a href="https://inttrade.thu.edu.tw/cat-announcement/cat-announcement-internship/%e3%80%90115-2-%e5%af%a6%e7%bf%92%e8%b3%87%e8%a8%8a%e3%80%91%e7%8e%89%e5%b1%b1%e9%8a%80%e8%a1%8c2027%e5%b9%b4%e5%ba%a6%e5%af%a6%e7%bf%92%e7%94%9f%e6%8b%9b%e5%8b%9f%e8%b3%87%e8%a8%8a-%e5%bb%b6/" target="_blank" rel="noopener">國貿系</a></td>
+        <td data-label="截止報名日期">2026-10-11 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">2027玉山金控實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=824" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-11 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">永豐銀行2027法金ARM實習生計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=860" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-09 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">2027台中二信學期實習<span class="limit warn">⚠️ 公告可能限定科系或要配合該系實習課，請先洽詢公司是否開放企管系</span></td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=833" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-10-08 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">【學期實習招募說明會】台北富邦銀行2027實習計畫</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/【學期實習招募說明會】台北富邦銀行2027實習計畫/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2026-10-02 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="實習中心" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">【台中商業銀行】116/2-116/6 學期實習甄選</td>
+        <td data-label="職缺來源"><a href="https://isac-net.thu.edu.tw/web/research/detail.php?cid=2&amp;cid2=2&amp;id=1129" target="_blank" rel="noopener">實習中心</a></td>
+        <td data-label="截止報名日期">2026-10-02 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">【元大銀行116年上半年實習計畫】「元」夢直達車，發車！歡迎加入元大銀行，一起開往更好的未來！</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/【元大銀行116年上半年實習計畫】「元」夢直達車,發車!歡迎加入元大銀行,一起開往更好的未來!/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2026-09-30 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">元大銀行116年上半年理財實習生招募</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=850" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-09-30 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">台中銀行2027企業實習招募</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=856&amp;cid=15" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-09-29 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">[ 兆豐銀行校園實習 ]</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/[+兆豐銀行校園實習+]/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2026-09-22 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="財金系" data-industry="金融業" data-status="closed" class="closed">
+        <td data-label="實習職缺">兆豐銀行115年產學合作實習計畫</td>
+        <td data-label="職缺來源"><a href="https://fin.thu.edu.tw/web/news/detail.php?id=646" target="_blank" rel="noopener">財金系</a></td>
+        <td data-label="截止報名日期">2026-09-22 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#金融業</span></td>
+      </tr>
+      <tr data-source="企管系" data-industry="其他" data-status="closed" class="closed">
+        <td data-label="實習職缺">115學年度第一學期企業實習申請開始囉!!</td>
+        <td data-label="職缺來源"><a href="https://ba.thu.edu.tw/Education/115學年度第一學期企業實習申請開始囉!!/" target="_blank" rel="noopener">企管系</a></td>
+        <td data-label="截止報名日期">2025-10-11 <span class="off">已截止</span></td>
+        <td data-label="類別"><span class="tag">#其他</span></td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+<script>
+  // 篩選：每個分頁的篩選列只控制自己的清單
+  document.querySelectorAll("#thu-intern .bar[data-list]").forEach(function (bar) {
+    var list = document.getElementById(bar.dataset.list),
+        src = bar.querySelector(".f-src"), ind = bar.querySelector(".f-ind"),
+        hide = bar.querySelector(".f-hide"), shown = bar.querySelector(".f-shown"), q = bar.querySelector(".f-q"),
+        rows = Array.prototype.slice.call(list.querySelectorAll(":scope > tr[data-source]"));
+    rows.forEach(function (r) { r._text = r.textContent.replace(/\s+/g, " ").toLowerCase(); });
+    function apply() {
+      var n = 0, keep = [], drop = [], words = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      rows.forEach(function (r) {
+        var ok = words.every(function (w) { return r._text.indexOf(w) >= 0; }) &&
+                 (!src.value || r.dataset.source === src.value) &&
+                 (!ind.value || r.dataset.industry === ind.value) &&
+                 (!hide.checked || r.dataset.status !== "closed");
+        r.hidden = !ok; if (ok) { n++; keep.push(r); } else drop.push(r);
+      });
+      keep.concat(drop).forEach(function (r) { list.appendChild(r); });   // 符合條件的排在最上面
+      shown.textContent = "顯示 " + n + " 則";
+    }
+    src.onchange = ind.onchange = hide.onchange = apply; q.oninput = apply; apply();
+  });
+</script>
+</body>
+</html>
