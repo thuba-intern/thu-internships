@@ -28,4 +28,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html internships.html internships.csv
           git diff --cached --quiet || git commit -m "每日更新實習職缺 $(TZ=Asia/Taipei date +%F)"
+          git pull --rebase    # 執行期間如果有人上傳新檔案，先合併再存回，避免存回失敗
           git push
