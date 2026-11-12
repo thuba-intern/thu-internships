@@ -89,13 +89,28 @@ SESSION.headers.update({
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                   "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
     "Accept-Language": "zh-TW,zh;q=0.9",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 })
 
 
 # ═════════════ 1. 下載網頁 ═════════════
+def get_with_retry(url, tries=4):
+    """連線被中斷或逾時時，等一下再試（等 5、15、30 秒），最多試 4 次。
+    有些學校網站偶爾會直接斷線（例如 Remote end closed connection），多試幾次通常就能抓到。"""
+    for k in range(tries):
+        try:
+            return SESSION.get(url, timeout=30)
+        except (requests.ConnectionError, requests.Timeout) as e:
+            if k == tries - 1:
+                raise
+            wait = (5, 15, 30)[min(k, 2)]
+            print(f"  連線失敗，{wait} 秒後重試（第 {k + 2} 次）：{e.__class__.__name__}")
+            time.sleep(wait)
+
+
 def fetch(url):
     """下載一個網頁，回傳 BeautifulSoup 物件。"""
-    resp = SESSION.get(url, timeout=20)
+    resp = get_with_retry(url)
     if resp.status_code != 404:      # 404 先不當成錯誤：有些網站會回 404 卻仍附上內容
         resp.raise_for_status()
     time.sleep(DELAY)
@@ -104,7 +119,7 @@ def fetch(url):
 
 def fetch_json(url):
     """下載 JSON 資料（國貿系的 WordPress 介面用）。"""
-    resp = SESSION.get(url, timeout=20)
+    resp = get_with_retry(url)
     resp.raise_for_status()
     time.sleep(DELAY)
     return resp.json()
