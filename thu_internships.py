@@ -75,7 +75,8 @@ GIFT_JOB_URL = GIFT_BASE + "index.php/welcome/jobs?s_1=2#{id}"         # 打開�
 MAX_AGE_DAYS = 120                 # 發布超過幾天的舊公告就不列（還沒截止的除外）
 NO_DEADLINE_KEEP_DAYS = 60         # 找不到截止日的公告：發布超過幾天就不列
 EXPIRED_KEEP_DAYS = None           # 已截止超過幾天就不列；None 表示已截止的全部列出
-EXCLUDE_TITLE_WORDS = ["錄取名單", "【活動", "總覽", "Google Taiwan 實習說明會"]     # 標題含這些字的公告不是招募資訊，直接略過
+EXCLUDE_TITLE_WORDS = ["錄取名單", "【活動", "總覽", "Google Taiwan 實習說明會",
+                       "助教", "企業實習申請"]     # 標題含這些字的公告不是招募資訊，直接略過
 OVERVIEW_WORDS = ["總覽"]          # 標題含這些字的是「彙整表」：一律列出，不判斷截止日
 
 # 詳細內容
@@ -794,15 +795,15 @@ def find_positions(text):
 INDUSTRIES = [
     ("文化藝術", ["美術館", "博物館", "藝術", "文化", "生態館", "科學館", "展覽"]),
     ("公部門", ["政府", "國稅局", "財政部", "關務署", "公所", "國營", "農業部", "林業", "水利局",
-               "衛生福利部", "管制署", "檔案管理局", "國家發展委員會", "經濟部"]),
+               "衛生福利部", "管制署", "檔案管理局", "國家發展委員會", "經濟部", "機場"]),
     ("金融業", ["銀行", "商銀", "金控", "證券", "期貨", "保險", "人壽", "壽險", "產險", "產物", "信託",
                "金融", "二信", "合作金庫", "中租", "迪和", "投信", "理財", "富邦", "國泰", "玉山", "元大",
-               "兆豐", "永豐", "中國信託", "中信", "第一金", "華南", "聯邦", "安泰", "板信", "三信",
+               "兆豐", "永豐銀", "永豐金", "永豐商銀", "永豐證券", "永豐期貨", "中國信託", "中信", "第一金", "華南", "聯邦", "安泰", "板信", "三信",
                "群益", "南山", "新光"]),
     ("科技業", ["科技", "電子", "半導體", "資訊", "軟體", "數智", "鼎新", "Google", "美光", "聯華電子",
                "聯電", "京元", "上銀", "凌網", "晶圓", "資安", "AI", "台積電", "台積", "緯創", "創資通"]),
-    ("製造業", ["製造", "工業", "機械", "電機", "化工", "食品", "紡織", "鞋", "興農", "新武", "賜昌", "設備", "成衣", "飛雁"]),
-    ("商業服務", ["貿易", "國貿", "會計師", "事務所", "顧問", "行銷", "零售", "物流", "餐飲", "飯店", "觀光", "人力", "航運", "海空運"]),
+    ("製造業", ["製造", "工業", "機械", "電機", "化工", "食品", "紡織", "鞋", "興農", "新武", "賜昌", "設備", "成衣", "飛雁", "永豐餘", "禾寶", "手套"]),
+    ("商業服務", ["貿易", "國貿", "會計師", "事務所", "顧問", "行銷", "零售", "物流", "餐飲", "飯店", "觀光", "人力", "航運", "海空運", "UNIQLO", "服飾", "百貨"]),
 ]
 INDUSTRY_NAMES = [name for name, _ in INDUSTRIES] + ["其他"]
 
@@ -817,7 +818,7 @@ def classify_industry(item):
     if any(w in item["title"] for w in OVERVIEW_WORDS):
         return "其他"
     head = " ".join([item["name"], item.get("unit", ""), item["positions"], item["summary"]])
-    noise = re.compile(r"(招募|徵才|實習|校園)資訊")             # 「招募資訊」的「資訊」不代表資訊業
+    noise = re.compile(r"(招募|徵才|實習|校園|宣傳|活動)資訊")             # 「招募資訊」的「資訊」不代表資訊業
     for text in (noise.sub("", head), noise.sub("", strip_marks(item["content"])[:400])):
         for name, words in INDUSTRIES:
             if any(w in text for w in words):
@@ -825,7 +826,7 @@ def classify_industry(item):
     return "其他"
 
 
-FULLTIME_WORDS = ["徵才", "儲備", "新鮮人", "正職", "校園招募"]   # 標題有這些字、但沒有「實習」→ 正職分頁
+FULLTIME_WORDS = ["徵才", "儲備", "新鮮人", "正職", "校園招募", "公開招募", "招考"]   # 標題有這些字、但沒有「實習」→ 正職分頁
 
 
 def job_kind(item):
@@ -1005,7 +1006,8 @@ def collect():
             items += crawl()
         except Exception as e:                             # 一個網站失敗不影響其他網站
             print(f"[{name}] 擷取失敗，先略過：{e}")
-    items = [i for i in items if not any(w in i["title"] for w in EXCLUDE_TITLE_WORDS)]
+    nospace = lambda t: re.sub(r"\s+", "", t)              # 比對時忽略空白（有些標題用全形或不換行空白）
+    items = [i for i in items if not any(nospace(w) in nospace(i["title"]) for w in EXCLUDE_TITLE_WORDS)]
     print(f"\n共 {len(items)} 則公告，開始補詳細內容與報名截止日…")
     items = [add_details(i) for i in items]
     items = apply_eligibility(apply_manual(items))
