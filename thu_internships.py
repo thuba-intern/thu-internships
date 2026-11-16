@@ -26,7 +26,7 @@ import html
 import re
 import time
 from datetime import date, datetime, timedelta, timezone
-from urllib.parse import urljoin, urlsplit, unquote
+from urllib.parse import urljoin, urlsplit, unquote, quote
 
 import requests
 from bs4 import BeautifulSoup
@@ -104,7 +104,7 @@ def get_with_retry(url, tries=4):
             if k == tries - 1:
                 raise
             wait = (5, 15, 30)[min(k, 2)]
-            print(f"  連線失敗，{wait} 秒後重試（第 {k + 2} 次）：{e.__class__.__name__}")
+            print(f"  {urlsplit(url).netloc} 連線失敗，{wait} 秒後重試（第 {k + 2} 次）：{e.__class__.__name__}")
             time.sleep(wait)
 
 
@@ -580,18 +580,76 @@ def crawl_fin():
 
 
 # ═════════════ 7. 來源 4：經濟系「實習資訊」 ═════════════
+# 經濟系網站會擋 GitHub（國外主機）的連線。直接連不上時，依序改用兩個免費轉接服務代讀：
+ECON_RELAY_HTML = "https://api.allorigins.win/raw?url="   # 回傳原始網頁，照一般方式解析
+ECON_RELAY = "https://r.jina.ai/"                          # 回傳文字版（Markdown）
+
+
 def crawl_econ():
     """經濟系把所有公告寫在同一頁，每則以一個標題（h2）開頭，沒有各自的內頁與發布日。"""
-    soup = fetch(ECON_URL)
-    area = soup.select_one(".entry-content") or soup.find("article") or soup.find("main") or soup
-    for level in ("h2", "h3"):
-        heads = area.find_all(level)
+    try:
+        resp = get_with_retry(ECON_URL)
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        print(f"[經濟系] 直接連線失敗（{e.__class__.__name__}），改用轉接服務 allorigins 讀取…")
+        try:
+            resp = get_with_retry(ECON_RELAY_HTML + quote(ECON_URL, safe=""), tries=2)
+            resp.raise_for_status()
+        except requests.RequestException as e2:
+            print(f"[經濟系] allorigins 也失敗（{e2.__class__.__name__}），改用 r.jina.ai 讀取…")
+            return crawl_econ_relay()
+    soup = BeautifulSoup(resp.content, "html.parser")
+    # 依序找內容區：一般文章區 → article → main → 整頁；挑第一個裡面有 2 個以上標題的
+    candidates = [soup.select_one(".entry-content"), soup.find("article"), soup.find("main"), soup]
+    area, heads = soup, []
+    for cand in candidates:
+        if cand is None:
+            continue
+        for level in ("h2", "h3"):
+            found = cand.find_all(level)
+            if len(found) >= 2:
+                area, heads = cand, found
+                break
         if heads:
             break
+    if not heads:                                          # 找不到標題時印出線索，方便判斷網站是不是改版或擋連線
+        title = soup.title.get_text(strip=True) if soup.title else "（無標題）"
+        print(f"[經濟系] 頁面上找不到標題：網頁標題「{title}」，長度 {len(str(soup))} 字元，"
+              f"開頭：{soup.get_text(' ', strip=True)[:150]}")
     for h in heads:
         h.insert_before("\n" + SPLIT_MARK)                 # 在每個標題前做記號，等一下用它切開
+    items = econ_items(page_text(area, ECON_URL).split(SPLIT_MARK)[1:])
+    if not items and not heads:                            # 拿到的不是真正的公告頁（例如被擋的提示頁），再試文字版轉接
+        print("[經濟系] 頁面內容不對，改用 r.jina.ai 讀取…")
+        return crawl_econ_relay()
+    if heads and not items:                                # 有標題卻一則都沒抓到：印出前幾個標題，方便除錯
+        print(f"[經濟系] 找到 {len(heads)} 個標題但沒有職缺，前幾個：",
+              [h.get_text(" ", strip=True)[:20] for h in heads[:5]])
+    print(f"[經濟系] {len(items)} 則實習／徵才")
+    return items
+
+
+def crawl_econ_relay():
+    """透過轉接服務取得經濟系頁面的文字版（Markdown），每則公告以「## 標題」開頭。"""
+    resp = get_with_retry(ECON_RELAY + ECON_URL, tries=2)
+    resp.raise_for_status()
+    text = resp.text.split("Markdown Content:", 1)[-1]
+    text = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", text)            # 去掉圖片
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)         # 連結只留文字
+    text = text.replace("**", "")
+    text = re.split(r"^#{4,}", text, maxsplit=1, flags=re.M)[0]  # 頁尾（追蹤我們、熱門連結）是更小的標題，從那裡切掉
+    chunks = re.split(r"^#{2,3}[ \t]+", text, flags=re.M)[1:]
+    items = econ_items(chunks)
+    if not items:
+        raise RuntimeError(f"轉接服務也沒讀到職缺（回傳 {len(resp.text)} 字元）")
+    print(f"[經濟系] 透過轉接服務取得 {len(items)} 則實習／徵才")
+    return items
+
+
+def econ_items(chunks):
+    """把一段段「標題＋內文」整理成職缺。"""
     items = []
-    for chunk in page_text(area, ECON_URL).split(SPLIT_MARK)[1:]:
+    for chunk in chunks:
         lines = [l for l in cut_tail(chunk).split("\n") if l.strip()]
         if len(lines) < 2:
             continue
@@ -603,7 +661,6 @@ def crawl_econ():
         item = new_item("經濟系", title, ECON_URL)
         item["text"], item["content"] = body, clean_content(body, title)
         items.append(item)
-    print(f"[經濟系] {len(items)} 則實習／徵才")
     return items
 
 
@@ -1014,6 +1071,9 @@ def limit_html(item):
     return f'<span class="limit {"no" if text.startswith("❌") else "warn"}">{html.escape(text)}</span>'
 
 
+FAILED_SOURCES = []    # 這次沒抓到的來源（例如網站擋國外主機），頁面上會改放連結請學生直接去看
+
+
 def collect():
     items = []
     for name, crawl in SOURCES:
@@ -1021,6 +1081,7 @@ def collect():
             items += crawl()
         except Exception as e:                             # 一個網站失敗不影響其他網站
             print(f"[{name}] 擷取失敗，先略過：{e}")
+            FAILED_SOURCES.append(name)
     nospace = lambda t: re.sub(r"\s+", "", t)              # 比對時忽略空白（有些標題用全形或不換行空白）
     items = [i for i in items if not any(nospace(w) in nospace(i["title"]) for w in EXCLUDE_TITLE_WORDS)]
     print(f"\n共 {len(items)} 則公告，開始補詳細內容與報名截止日…")
@@ -1197,15 +1258,19 @@ SIMPLE_PAGE = """<!DOCTYPE html>
   #thu-intern .notice .limit {{ display: inline; margin: 0; }}
   #thu-intern .limit.no {{ background: #fdecea; color: #b71c1c; }}
   #thu-intern .limit.warn {{ background: #fff4e5; color: #8a4f00; }}
+  /* 回企管實習資訊站 */
+  #thu-intern .ti-back {{ display: table; margin: 0 0 12px; color: #fff; border: 2px solid #fff; border-radius: 6px; padding: 4px 14px; text-decoration: none; font-weight: 600; font-size: .92em; }}
+  #thu-intern .ti-back:hover {{ background: rgba(255,255,255,.15); }}
 </style>
 </head>
 <body class="thu-page">
 <main id="thu-intern" class="thu-intern">
+  <a class="ti-back" href="https://855312.us22.myftpupload.com/wp-content/uploads/2026/11/%E4%BC%81%E7%AE%A1%E5%AF%A6%E7%BF%92%E8%B3%87%E8%A8%8A%E7%AB%99.html">← 回企管實習資訊站</a>
   <h1 class="ti-title">東海實習職缺一覽</h1>
   <div class="meta">更新時間 {updated}・每則資訊都附上來源網址，報名前請以原始公告為準</div>
   <section class="panel" id="intern" role="tabpanel">
     <p class="lead">整理企管、國貿、財金、經濟系、實習與學生成就中心及 GIFT 的實習公告，每天自動更新。共 {count} 則（可報名 {n_open}、未標示截止日 {n_unknown}、已截止 {n_closed}）。</p>
-    <div class="notice">
+{failed_note}    <div class="notice">
       <p><b>⚠️ 報名前請注意：</b>國貿、財金、經濟系公告的職缺，有些只開放該系學生。請先看原公告的資格，並<b>洽詢該公司或職缺窗口是否開放企管系學生報名</b>。標 <span class="limit no" >❌</span> 的已確認限定科系，標 <span class="limit warn" >⚠️</span> 的資格需要再確認。國貿、財金、經濟系的職缺如果<b>沒有標示</b>，代表公司在該系公告上沒有寫出限制條件，但不代表一定開放，仍請先洽詢公司，錄取後再向企管系辦確認學分認列。</p>
       <details>
         <summary>📌 為什麼也放其他系的職缺？為什麼同一個職缺會出現好幾次？</summary>
@@ -1314,10 +1379,20 @@ def build_simple_html(all_items):
         count=len(items), options=options, ind_options=ind_options, rows="\n".join(rows),
         job_count=len(jobs), job_options=job_options, job_ind_options=job_ind_options, job_rows="\n".join(job_rows) or '      <tr><td>目前沒有正職公告</td></tr>',
         intern_sites=site_cards(INTERN_SITES), job_sites=site_cards(JOB_SITES),
+        failed_note=failed_note(),
         n_open=sum(status_of(i) == "open" for i in items),
         n_unknown=sum(status_of(i) == "unknown" for i in items),
         n_closed=sum(status_of(i) == "closed" for i in items),
         updated=datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M"))
+
+
+def failed_note():
+    """有來源沒抓到時，在頁首加一行連結，請學生直接去該系網站看。"""
+    links = [f'<a href="{html.escape(url)}" target="_blank" rel="noopener" style="color:#fff;font-weight:600">{html.escape(name)}實習公告</a>'
+             for name, url in SOURCE_LINKS if name in FAILED_SOURCES]
+    if not links:
+        return ""
+    return f'    <p class="lead">📌 {"、".join(links)}今天無法自動讀取，請點連結直接查看。</p>\n'
 
 
 def write_csv(items, path):
